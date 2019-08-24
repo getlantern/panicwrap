@@ -38,6 +38,10 @@ type WrapConfig struct {
 	// Handler is the function called when a panic occurs.
 	Handler HandlerFunc
 
+	// BeforeStartChild, when set, allows altering attributes such as extra
+	// files and envvars before running the child process.
+	BeforeStartChild func(*exec.Cmd)
+
 	// The cookie key and value are used within environmental variables
 	// to tell the child process that it is already executing so that
 	// wrap doesn't re-wrap itself.
@@ -164,6 +168,9 @@ func Wrap(c *WrapConfig) (int, error) {
 		cmd.ExtraFiles = []*os.File{os.Stdin, os.Stdout, os.Stderr}
 	}
 
+	if c.BeforeStartChild != nil {
+		c.BeforeStartChild(cmd)
+	}
 	if err := cmd.Start(); err != nil {
 		return 1, err
 	}
