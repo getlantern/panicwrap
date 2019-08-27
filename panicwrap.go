@@ -42,6 +42,11 @@ type WrapConfig struct {
 	// files and envvars before running the child process.
 	BeforeStartChild func(*exec.Cmd)
 
+	// AfterStartChild, when set, allows the master process to get process
+	// information of the child process, and possibly do something different
+	// from it.
+	AfterStartChild func(*exec.Cmd)
+
 	// The cookie key and value are used within environmental variables
 	// to tell the child process that it is already executing so that
 	// wrap doesn't re-wrap itself.
@@ -173,6 +178,9 @@ func Wrap(c *WrapConfig) (int, error) {
 	}
 	if err := cmd.Start(); err != nil {
 		return 1, err
+	}
+	if c.AfterStartChild != nil {
+		c.AfterStartChild(cmd)
 	}
 
 	// Listen to signals and capture them forever. We allow the child
